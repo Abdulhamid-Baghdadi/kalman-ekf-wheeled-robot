@@ -5,3 +5,4 @@ logs/
 .catkin_workspace
 __pycache__/
 .vscode/
+out/

@@ -1,0 +1,63 @@
+<launch>
+    <arg name="rviz" default="true"/>
+    <arg name="start_delay" default="5.0"/>
+    <arg name="gazebo_gui" default="true"/>
+    <arg name="world" default="$(find gruppe2_bringup)/worlds/house.world"/>
+    <arg name="robot_namespace" default="rosbot" />
+
+    <arg name="x" default="-2.0" />
+    <arg name="y" default="1.0" />
+    <arg name="z" default="0.0" />
+    <arg name="yaw" default="0.0" />
+
+    <!-- Sapwn Gazebo World -->
+    <include file="$(find gazebo_ros)/launch/empty_world.launch">
+        <arg name="world_name" value="$(arg world)" />
+        <arg name="paused" value="false" />
+        <arg name="use_sim_time" value="true" />
+        <arg name="gui" value="$(arg gazebo_gui)" />
+        <arg name="headless" value="false" />
+        <arg name="debug" value="false" />
+        <arg name="verbose" value="true" />
+    </include>
+
+    <rosparam command="load" file="$(find joint_state_controller)/joint_state_controller.yaml" />
+    <node name="joint_state_controller_spawner" pkg="controller_manager" type="spawner" output="screen" args="joint_state_controller" />
+    <!-- Load Robot Model -->
+    <param name="robot_description" 
+                    command="$(find xacro)/xacro '$(find gruppe2_bringup)/urdf/rosbot_fastsim.urdf'" />
+
+    <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher"/>
+    <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher" />
+
+    <!-- Spawn robot in gazebo -->
+    <node name="sapwn_robot" pkg="gazebo_ros" type="spawn_model" args="-x $(arg x)
+              -y $(arg y)
+              -z $(arg z)
+              -Y $(arg yaw)
+              -unpause
+              -urdf
+              -param robot_description
+              -model $(arg robot_namespace)
+              -robot $(arg robot_namespace)" />
+
+
+    <!-- Demo extras (portfolio recording): both filters at once, fed with noisy odometry.
+         The filters' own TF (X_Position -> base_link) is moved to /tf_filters so it does not fight
+         Gazebo's odom -> base_link; the filter frames are pinned to odom (= Gazebo world) instead. -->
+    <node name="kalman_filter_node" pkg="gruppe2_bringup" type="kalman_filter_node" output="log">
+        <remap from="/rosbot/odom" to="/rosbot/odom_noisy"/>
+        <remap from="/tf" to="/tf_filters"/>
+    </node>
+    <node name="extended_kalman_filter_node" pkg="gruppe2_bringup" type="extended_kalman_filter_node" output="log">
+        <remap from="/rosbot/odom" to="/rosbot/odom_noisy"/>
+        <remap from="/tf" to="/tf_filters"/>
+    </node>
+    <node pkg="tf2_ros" type="static_transform_publisher" name="kf_frame" args="0 0 0 0 0 0 odom KF_Position"/>
+    <node pkg="tf2_ros" type="static_transform_publisher" name="ekf_frame" args="0 0 0 0 0 0 odom EKF_Position"/>
+    <node pkg="gruppe2_bringup" type="demo_tools.py" name="demo_tools" output="screen">
+        <param name="start_delay" value="$(arg start_delay)"/>
+    </node>
+
+    <node if="$(arg rviz)" name="rviz" pkg="rviz" type="rviz" args="-d $(find gruppe2_bringup)/rviz/demo_kf_vs_ekf.rviz"/>
+</launch>

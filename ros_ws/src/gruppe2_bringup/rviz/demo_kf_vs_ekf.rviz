@@ -1,0 +1,145 @@
+Panels: []
+Visualization Manager:
+  Class: ""
+  Displays:
+    - Class: rviz/Grid
+      Name: Grid
+      Cell Size: 0.5
+      Plane Cell Count: 40
+      Color: 90; 90; 90
+      Alpha: 0.5
+      Reference Frame: <Fixed Frame>
+      Enabled: true
+      Value: true
+    - Class: rviz/RobotModel
+      Name: RobotModel (ground truth)
+      Robot Description: robot_description
+      Alpha: 1
+      Enabled: true
+      Value: true
+    - Class: rviz/Path
+      Name: Noisy odometry
+      Topic: /demo/path_odom
+      Color: 150; 150; 150
+      Alpha: 0.8
+      Line Style: Billboards
+      Line Width: 0.012
+      Pose Style: None
+      Buffer Length: 1
+      Enabled: true
+      Value: true
+    - Class: rviz/Path
+      Name: Ground truth
+      Topic: /demo/path_truth
+      Color: 255; 255; 255
+      Alpha: 1
+      Line Style: Billboards
+      Line Width: 0.03
+      Pose Style: None
+      Buffer Length: 1
+      Enabled: true
+      Value: true
+    - Class: rviz/Path
+      Name: KF path
+      Topic: /demo/path_kf
+      Color: 239; 71; 111
+      Alpha: 1
+      Line Style: Billboards
+      Line Width: 0.025
+      Pose Style: None
+      Buffer Length: 1
+      Enabled: true
+      Value: true
+    - Class: rviz/Path
+      Name: EKF path
+      Topic: /demo/path_ekf
+      Color: 17; 178; 230
+      Alpha: 1
+      Line Style: Billboards
+      Line Width: 0.025
+      Pose Style: None
+      Buffer Length: 1
+      Enabled: true
+      Value: true
+    - Class: rviz/PoseWithCovariance
+      Name: KF pose + covariance
+      Topic: /KF_Position
+      Shape: Arrow
+      Color: 239; 71; 111
+      Alpha: 1
+      Shaft Length: 0.3
+      Shaft Radius: 0.03
+      Head Length: 0.12
+      Head Radius: 0.07
+      Covariance:
+        Value: true
+        Position:
+          Value: true
+          Color: 239; 71; 111
+          Alpha: 0.35
+          Scale: 30
+        Orientation:
+          Value: true
+          Color: 239; 71; 111
+          Alpha: 0.35
+          Frame: Local
+          Offset: 0.4
+          Scale: 3
+          Color Style: Unique
+      Enabled: true
+      Value: true
+    - Class: rviz/PoseWithCovariance
+      Name: EKF pose + covariance
+      Topic: /EKF_Position
+      Shape: Arrow
+      Color: 17; 178; 230
+      Alpha: 1
+      Shaft Length: 0.3
+      Shaft Radius: 0.03
+      Head Length: 0.12
+      Head Radius: 0.07
+      Covariance:
+        Value: true
+        Position:
+          Value: true
+          Color: 17; 178; 230
+          Alpha: 0.35
+          Scale: 30
+        Orientation:
+          Value: true
+          Color: 17; 178; 230
+          Alpha: 0.35
+          Frame: Local
+          Offset: 0.4
+          Scale: 3
+          Color Style: Unique
+      Enabled: true
+      Value: true
+  Enabled: true
+  Global Options:
+    Background Color: 30; 32; 38
+    Default Light: true
+    Fixed Frame: odom
+    Frame Rate: 30
+  Name: root
+  Tools:
+    - Class: rviz/Interact
+  Value: true
+  Views:
+    Current:
+      Class: rviz/TopDownOrtho
+      Name: Current View
+      Scale: 165
+      X: -2.2
+      Y: 2.45
+      Angle: 0
+      Target Frame: <Fixed Frame>
+Window Geometry:
+  Displays:
+    collapsed: true
+  Hide Left Dock: true
+  Hide Right Dock: true
+  Height: 1080
+  Width: 960
+  X: 0
+  Y: 0

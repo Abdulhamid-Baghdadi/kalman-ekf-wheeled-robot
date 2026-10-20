@@ -1,16 +1,18 @@
 # Kalman Filter vs. Extended Kalman Filter for a Differential-Drive Robot
 
-![KF vs EKF: true vs. estimated trajectory with covariance ellipses](docs/kf_vs_ekf.gif)
+![KF and EKF running live: Gazebo on the left, RViz on the right](docs/kf_vs_ekf_gazebo_rviz.gif)
+
+<sub>Recorded from the actual ROS nodes (ROS Noetic, Gazebo 11, RViz), sped up. Full-quality video:
+[`docs/kf_vs_ekf_gazebo_rviz.mp4`](docs/kf_vs_ekf_gazebo_rviz.mp4).</sub>
 
 A **Kalman filter (KF)** and an **extended Kalman filter (EKF)** written in C++ (ROS 1 + Eigen) that estimate
 the pose `(x, y, θ)` of a differential-drive robot from its velocity commands and noisy odometry.
-In the original setup the robot is a Husarion ROSbot driven by keyboard teleop in a Gazebo house world;
-the filtered pose and its covariance are published as `PoseWithCovarianceStamped` and shown live in RViz.
+The robot is a Husarion ROSbot in a Gazebo house world. Each filter publishes its pose and covariance as a
+`PoseWithCovarianceStamped`, and RViz draws it live.
 
-> **About the animation:** ROS 1 / Gazebo is not available on the machine this README was prepared on, so the GIF
-> above comes from [`sim/kf_ekf_sim.py`](sim/kf_ekf_sim.py), a line-by-line **NumPy port of `KF.cpp` and `EKF.cpp`**
-> (same matrices, noise values, `dt = 0.02 s` and start pose). Only the environment is replaced: a scripted velocity
-> command drives a unicycle model with wheel slip, and the "odometry" is the true pose plus Gaussian noise.
+In the recording, both filters run at the same time on the same inputs while the robot drives a loop around the table:
+**white** = Gazebo ground truth, **grey** = noisy odometry fed to the filters, **red** = KF, **blue** = EKF.
+The shaded ellipses are the position covariances, drawn 30× larger so they are visible.
 
 ## The model
 
@@ -74,21 +76,23 @@ that Σ converges to a steady state instead of growing without bound.
 
 ## Results
 
-![KF and EKF side by side](docs/kf_vs_ekf.png)
+**In Gazebo (video above).** On the straights, both filters smooth the noisy odometry (σ = 10 cm) to a few
+centimetres around the true path. At the corners both estimates swing inward by up to ~0.4 m and are then pulled back.
+The reason is that Gazebo's skid-steer robot turns less than commanded, while the filters predict with the commanded
+`(v, ω)` and trust that prediction more than the noisy odometry (`R` small against `Q`). This is a real modelling
+mismatch, not a bug in the recording, and the obvious next step would be to tune `R`/`Q` or use measured wheel
+speeds as the input.
 
-From the offline re-run (32 s, seed 4):
+**Offline re-run.** [`sim/kf_ekf_sim.py`](sim/kf_ekf_sim.py) is a line-by-line **NumPy port of `KF.cpp` and `EKF.cpp`**
+(same matrices, noise values, `dt = 0.02 s` and start pose) on an ideal unicycle with wheel slip. Without the model
+mismatch, both filters cut the position error from 14.0 cm (raw odometry) to 1.4 cm:
 
-| | position RMSE |
-|---|---|
-| raw odometry `z` | 14.0 cm |
-| KF | 1.4 cm |
-| EKF | 1.4 cm |
+![KF and EKF side by side, offline re-run](docs/kf_vs_ekf.png)
 
-Both filters cut the position error by about 10× compared with the raw measurement. With the KF written this way
-(heading folded into `u`) the **predicted mean is the same as in the EKF**; the difference is in the
-**covariance**. With `A = I` the KF ignores how heading uncertainty turns into lateral position uncertainty, so its
-ellipses stay narrow across the direction of travel. The EKF's `G_x` couples θ into x/y, so its ellipses grow
-sideways in a more realistic way. That consistency matters once the measurements get sparse or worse.
+With the KF written this way (heading folded into `u`), the **predicted mean is the same as in the EKF**; the
+difference is in the **covariance**. With `A = I` the KF ignores how heading uncertainty turns into sideways position
+uncertainty, so its ellipses stay narrow across the direction of travel. The EKF's `G_x` couples θ into x/y, so its
+ellipses grow sideways, which is more realistic.
 
 ## Repository layout
 
@@ -97,11 +101,13 @@ ros_ws/src/gruppe2_bringup/   ROS 1 catkin package (package name kept from the c
   src/KF.{hpp,cpp}            Kalman filter class
   src/EKF.{hpp,cpp}           Extended Kalman filter class
   src/*_node.cpp              nodes: subscribe /rosbot/cmd_vel + /rosbot/odom, publish KF_Position / EKF_Position
-  launch/bringup_{KF,EKF}.launch   Gazebo + ROSbot + teleop + filter node + RViz
+  launch/bringup_{KF,EKF}.launch   original: Gazebo + ROSbot + teleop + one filter node + RViz
+  launch/demo_kf_vs_ekf.launch     demo: both filters side by side, noisy odometry, scripted loop
   rviz/, urdf/, meshes/, worlds/
 matlab/                       symbolic Jacobian derivation and covariance-limit check
 sim/kf_ekf_sim.py             offline NumPy re-run that generates the figures
-docs/                         GIF and PNG
+docker/                       Dockerfile + scripts that record and compose the demo video
+docs/                         video, GIF and figures
 ```
 
 ## Build and run
@@ -118,6 +124,21 @@ roslaunch gruppe2_bringup bringup_KF.launch    # or bringup_EKF.launch
 
 Drive the robot with the keyboard in the teleop xterm. `topic_relay.sh` forwards `/cmd_vel` to `/rosbot/cmd_vel`.
 The filter node prints the estimate, measurement and Σ, and RViz shows the estimate with its covariance.
+
+**Re-record the demo video with Docker (no ROS install needed, also works on Windows)**
+
+```bash
+docker build -f docker/Dockerfile -t kf-ekf-demo .
+docker run --rm --network none --shm-size=2g -v "$PWD/out:/out" kf-ekf-demo
+docker run --rm -v "$PWD/out:/out" -v "$PWD/docker/compose_video.sh:/c.sh" kf-ekf-demo bash /c.sh
+```
+
+The container renders Gazebo and RViz on virtual displays and records them with ffmpeg. `demo_kf_vs_ekf.launch`
+adds the demo pieces around the unchanged filter nodes:
+- `script/demo_tools.py` drives the loop (a waypoint follower using Gazebo's pose, standing in for a person on
+  keyboard teleop), adds the odometry noise, and publishes the path trails.
+- `urdf/rosbot_fastsim.urdf` swaps the wheel collision meshes for cylinders so Gazebo runs close to real time
+  without a GPU.
 
 **Offline re-run (no ROS needed)**
 
