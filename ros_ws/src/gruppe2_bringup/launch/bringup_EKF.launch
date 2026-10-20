@@ -1,0 +1,47 @@
+<launch>
+    <arg name="robot_namespace" default="rosbot" />
+
+    <arg name="x" default="-2.0" />
+    <arg name="y" default="1.0" />
+    <arg name="z" default="0.0" />
+    <arg name="yaw" default="0.0" />
+
+    <!-- Sapwn Gazebo World -->
+    <include file="$(find gazebo_ros)/launch/empty_world.launch">
+        <arg name="world_name" value="$(find gruppe2_bringup)/worlds/house.world" />
+        <arg name="paused" value="false" />
+        <arg name="use_sim_time" value="true" />
+        <arg name="gui" value="true" />
+        <arg name="headless" value="false" />
+        <arg name="debug" value="false" />
+        <arg name="verbose" value="true" />
+    </include>
+
+    <rosparam command="load" file="$(find joint_state_controller)/joint_state_controller.yaml" />
+    <node name="joint_state_controller_spawner" pkg="controller_manager" type="spawner" output="screen" args="joint_state_controller" />
+    <!-- Load Robot Model -->
+    <param name="robot_description" 
+                    command="$(find xacro)/xacro '$(find gruppe2_bringup)/urdf/rosbot.urdf'" />
+
+    <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher"/>
+    <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher" />
+
+    <!-- Spawn robot in gazebo -->
+    <node name="sapwn_robot" pkg="gazebo_ros" type="spawn_model" args="-x $(arg x)
+              -y $(arg y)
+              -z $(arg z)
+              -Y $(arg yaw)
+              -unpause
+              -urdf
+              -param robot_description
+              -model $(arg robot_namespace)
+              -robot $(arg robot_namespace)" />
+
+
+    <node name="extended_kalman_filter_node" pkg="gruppe2_bringup" type="extended_kalman_filter_node" output="screen" launch-prefix="xterm -e"/>
+    <node pkg="gruppe2_bringup" type="start_keyboard_control.sh" name="start_keyboard_control" output="screen" launch-prefix="xterm -e"/>
+    <node pkg="gruppe2_bringup" type="topic_relay.sh" name="topic_relay_script"/>
+
+    <arg name="rvizconfig" default="$(find gruppe2_bringup)/rviz/robot_EKF.rviz" />
+    <node name="rviz" pkg="rviz" type="rviz" args="-d $(arg rvizconfig)" required="true" />   
+</launch>
