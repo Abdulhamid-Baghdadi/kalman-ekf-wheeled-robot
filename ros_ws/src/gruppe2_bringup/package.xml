@@ -2,7 +2,7 @@
 <package format="2">
   <name>gruppe2_bringup</name>
   <version>0.0.0</version>
-  <description>Kalman filter and extended Kalman filter for a differential-drive robot (ROSbot in Gazebo)</description>
+  <description>Kalman filter and extended Kalman filter for a wheeled robot (ROSbot in Gazebo)</description>
 
   <!-- One maintainer tag required, multiple allowed, one person per tag -->
   <!-- Example:  -->

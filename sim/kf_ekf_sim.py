@@ -1,4 +1,4 @@
-"""Offline re-run of the ROS KF / EKF nodes on a simulated differential-drive robot.
+"""Offline re-run of the ROS KF / EKF nodes on a simulated wheeled robot.
 
 This is a faithful NumPy port of ros_ws/src/gruppe2_bringup/src/KF.cpp and EKF.cpp
 (same state, matrices, noise values, dt and start pose). Only the environment is
@@ -130,7 +130,7 @@ def main():
         ax.set_title(f"{name} — position RMSE {rmse[name] * 100:.1f} cm (odometry {rmse['odom'] * 100:.1f} cm)")
         ax.set_aspect("equal"); ax.grid(alpha=0.3); ax.set_xlabel("x [m]"); ax.set_ylabel("y [m]")
         ax.legend(loc="lower right", fontsize=8)
-    fig.suptitle("Differential-drive robot: true vs. estimated pose (ellipses = 10σ position covariance)")
+    fig.suptitle("Wheeled robot: true vs. estimated pose (ellipses = 10σ position covariance)")
     fig.tight_layout(); fig.savefig(OUT / "kf_vs_ekf.png", dpi=120); plt.close(fig)
 
     # animation -------------------------------------------------------------

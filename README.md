@@ -1,4 +1,4 @@
-# Kalman Filter vs. Extended Kalman Filter for a Differential-Drive Robot
+# Kalman Filter vs. Extended Kalman Filter for a Wheeled Robot
 
 ![KF and EKF running live: Gazebo on the left, RViz on the right](docs/kf_vs_ekf_gazebo_rviz.gif)
 
@@ -6,7 +6,7 @@
 [`docs/kf_vs_ekf_gazebo_rviz.mp4`](docs/kf_vs_ekf_gazebo_rviz.mp4).</sub>
 
 A **Kalman filter (KF)** and an **extended Kalman filter (EKF)** written in C++ (ROS 1 + Eigen) that estimate
-the pose `(x, y, θ)` of a differential-drive robot from its velocity commands and noisy odometry.
+the pose `(x, y, θ)` of a wheeled mobile robot (ROSbot, driven like a differential drive) from its velocity commands and noisy odometry.
 The robot is a Husarion ROSbot in a Gazebo house world. Each filter publishes its pose and covariance as a
 `PoseWithCovarianceStamped`, and RViz draws it live.
 
